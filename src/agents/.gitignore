@@ -1,2 +1,4 @@
 *.pyc
 src/agents/cost_model
+src/agents/cost_model/cost_nn_model.h5
+src/agents/cost_model/cost_science_model.py
