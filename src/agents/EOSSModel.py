@@ -1,6 +1,7 @@
 #from daarm.srv import *
-#import rospy
+import rospy
 import csv
+from std_msgs.msg import String
 
 import numpy as np
 from sklearn.linear_model import LinearRegression as LR
@@ -25,8 +26,8 @@ class EOSSModel:
         if(predata_path):
             self.load_data(predata_path)
         self.train_model()
-        # self.initevaluate_server()
-        #rospy.Subscriber("/configs", String, self.add_training_point)
+        #self.initevaluate_server()
+        rospy.Subscriber("/configs", String, self.add_training_point)
 
     def add_training_point(self, ros_msg):
         point = json.loads(ros_msg.data)
@@ -43,7 +44,7 @@ class EOSSModel:
         return np.array([int(bit) for bit in bitstring])
 
     def build_model(self):
-        model = load_model('./src/agents/science_nn_model.h5')
+        model = load_model('/home/hrc2/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
         return model
 
     def train_model(self):
@@ -74,4 +75,4 @@ class EOSSModel:
 
 
 if __name__ == '__main__':
-    m = EOSSModel("model/raw_combined_data.csv")
+    m = EOSSModel("/home/hrc2/catkin_ws_kinova/src/daarm/src/model/raw_combined_data.csv")

@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import sys
 import traceback
 import random
@@ -12,23 +13,25 @@ from platypus import NSGAII, Problem, Type, Real, Binary, Integer, ProcessPoolEv
 from platypus.config import default_variator
 from platypus.core import nondominated_sort, nondominated_truncate, Solution
 from EOSSModel import EOSSModel
-#import rospy
+import rospy
+from std_msgs.msg import String
 #from daarm.srv import *
 
 
 class DA_NSGAII(NSGAII):
     def __init__(self, problem, population_size=100, generator=RandomGenerator(), selector=TournamentSelector(2),
-                 variator=None, archive=None, injection_probability = 0.5, **kwargs):
-        super(DA_NSGAII, self).__init__(self, problem, population_size, generator,
+                 variator=None, archive=None, injection_probability = 1, **kwargs):
+        super(DA_NSGAII, self).__init__(problem, population_size, generator,
                                         selector, variator, archive, **kwargs)
         rospy.init_node('da_nsgaii')
         self.injection_probability = injection_probability
         self.observed_configs = Queue()
         self.config_listener = rospy.Subscriber(
-            '/configs', self.observe_new_configs)
+            '/configs', String, self.observe_new_configs)
 
     def observe_new_configs(self, message):
-        config = json.loads(message)["config"]
+	print("Length of queue",self.observed_configs.qsize())
+        config = json.loads(message.data)["config"]
         solution_config = self.bitstring2solution(config)
         self.observed_configs.put(solution_config)
 
@@ -44,7 +47,9 @@ class DA_NSGAII(NSGAII):
         for _ in range(num_observed_configs):
             try:
                 config = self.observed_configs.get()
+		print("config",  str(config))
                 if (np.random.uniform(0,1) <= self.injection_probability):
+		    print("prob succ")
                     chosen_configs.append(config)
             except Empty:
                 continue
@@ -56,7 +61,11 @@ class DA_NSGAII(NSGAII):
         while len(offspring) < self.population_size:
             parents = self.selector.select(self.variator.arity, self.population)
             offspring.extend(self.variator.evolve(parents))
-        offspring.extend(self.choose_observed_configs())
+	print("before injection: ",len(offspring))
+	chosen_configs = self.choose_observed_configs()
+	print("chosen_configs: ", len(chosen_configs))
+        offspring.extend(chosen_configs)
+	print("after injection: ",len(offspring))
         self.evaluate_all(offspring)
         
         offspring.extend(self.population)
@@ -82,7 +91,7 @@ cost
 
 class nsgaii_agent:
     def __init__(self, session_id=None, model=None):
-        self.n_iters = 1000
+        self.n_iters = 100000
         self.model = model
         self.session_id = session_id
         self.problem = Problem(1, 2)
@@ -104,18 +113,18 @@ class nsgaii_agent:
     def run(self):
         algorithm = DA_NSGAII(self.problem, population_size=50)
         algorithm.run(self.n_iters)
-        s = requests.Session()
-        s.post("https://www.selva-research.com/api/daphne/set-problem",
-               json={"problem": "ClimateCentric"})
+        #s = requests.Session()
+        #s.post("https://www.selva-research.com/api/daphne/set-problem",
+        #       json={"problem": "ClimateCentric"})
         for sol in algorithm.result:
             print(sol.objectives)
-            result = s.post("https://www.selva-research.com/api/vassar/evaluate-architecture",
-                            json={"special": "False", "inputs": str(sol.variables[0]).lower()})
-            print(result.json()['outputs'])
+            #result = s.post("https://www.selva-research.com/api/vassar/evaluate-architecture",
+            #                json={"special": "False", "inputs": str(sol.variables[0]).lower()})
+            #print(result.json()['outputs'])
 
 
 if __name__ == "__main__":
-    e = EOSSModel("./model/raw_combined_data.csv")
+    e = EOSSModel("/home/hrc2/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
     agent = nsgaii_agent(model=e)
     try:
         agent.run()
