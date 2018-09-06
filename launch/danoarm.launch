@@ -1,0 +1,28 @@
+<launch>
+  <!--Ros Bridge WebSocket Server for communication with DA TUI-->
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+
+  <rosparam command="load" file="$(find daarm)/config/calibration_params.yaml" />
+
+  <!--Kinova Jaco Launch-->
+  <!--<include file="$(find kinova_bringup)/launch/kinova_robot.launch">
+    <arg name="kinova_robotType" value="j2s7s300"/>
+  </include>-->
+  <!--Moveit Launch-->
+  <!--<include file="$(find j2s7s300_moveit_config)/launch/j2s7s300_demo.launch"/>-->
+
+  <!--Joint State Republisher (namespacing hack)-->
+  <node pkg="matt_tools" type="remapJointState.py" name="remapJointState"/>
+ 
+  <!--Block Coordinate Translator-->
+  <node pkg="daarm" type="block_translator.py" name="block_translator" output="screen"/>
+
+  <!--Config Evaluator-->
+  <node pkg="daarm" type="config_evaluator.py" name="config_evaluator" output="screen"/>
+
+  <!--Config to Action Node-->
+  <node pkg="daarm" type="config_to_action.py" name="config_to_action" output="screen"/>
+
+  <!--nsgaii agent-->
+  <node pkg="daarm" type="nsgaii.py" name="nsgaii_agent" output="screen"/>
+</launch>
