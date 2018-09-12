@@ -44,7 +44,7 @@ class EOSSModel:
         return np.array([int(bit) for bit in bitstring])
 
     def build_model(self):
-        model = load_model('/home/hrc2/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
+        model = load_model('/home/dev/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
         return model
 
     def train_model(self):
