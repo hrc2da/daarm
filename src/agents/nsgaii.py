@@ -18,7 +18,7 @@ from std_msgs.msg import String
 #from daarm.srv import *
 import time
 import logging
-logging.basicConfig(filename='./dalogs/nsgaii.log',level=logging.DEBUG)
+
 
 class DA_NSGAII(NSGAII):
     PUBLISH_BATCH = 100
@@ -26,6 +26,12 @@ class DA_NSGAII(NSGAII):
                  variator=None, archive=None, injection_probability = 1, **kwargs):
         super(DA_NSGAII, self).__init__(problem, population_size, generator,
                                         selector, variator, archive, **kwargs)
+        self.logger = logging.getLogger()
+        self.logger = logging.getLogger("nsgaii logger")
+        filehandler = logging.FileHandler('./dalogs/nsgaii.log')
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(filehandler)
+        #self.logger.basicConfig(filename='./dalogs/nsgaii.log',level=logging.DEBUG)
         rospy.init_node('da_nsgaii')
         self.population_publisher = rospy.Publisher('/populations',String, queue_size=10)
         self.generation_count = 0
@@ -78,7 +84,7 @@ class DA_NSGAII(NSGAII):
         for sol in self.population:
             config = ''.join([str(int(x)) for x in sol.variables[0]])
             science,cost = sol.objectives
-            logging.info("{},{},{},{},{}".format(self.generation_count,logtime,config,science,cost))
+            self.logger.info("{},{},{},{},{}".format(self.generation_count,logtime,config,science,cost))
             publish_set.append({"config":config,"cost":float(cost),"science":float(science)})
         if(self.generation_count % self.PUBLISH_BATCH == 0):
             #print("publish set",publish_set)

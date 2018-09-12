@@ -11,7 +11,7 @@ import json
 import time
 
 import logging
-logging.basicConfig(filename='./dalogs/faketui.log',level=logging.DEBUG)
+
 
 class FakeTUI:
     '''
@@ -25,6 +25,11 @@ class FakeTUI:
     EVAL_URI = "https://www.selva-research.com/api/vassar/evaluate-architecture"
     SESSION_URI = "https://www.selva-research.com/api/daphne/set-problem"
     def __init__(self,num_bits=60):
+        self.logger = logging.getLogger("faketui logger")
+        filehandler = logging.FileHandler('./dalogs/faketui.log')
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(filehandler)
+        #self.logger.basicConfig(filename='./dalogs/faketui.log',level=logging.DEBUG)
         rospy.init_node("fake_tui",anonymous=True)
         self.cur_config = '0'*num_bits
         #self.to_evalute = Queue()
@@ -88,7 +93,7 @@ class FakeTUI:
         msg.data = json.dumps({"config":config, "science":science, "cost":cost})
         logstr = "{},{},{},{},{}".format(source,config,science,cost,time.time())
         print(logstr)
-        logging.info(logstr)
+        self.logger.info(logstr)
         self.eval_publisher.publish(msg)
 
     def generate_config(self):
