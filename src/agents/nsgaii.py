@@ -143,7 +143,7 @@ class nsgaii_agent:
 
 
 if __name__ == "__main__":
-    e = EOSSModel("/home/dev/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
+    e = EOSSModel("/home/nikhildhawan/catkin_ws/src/daarm/model/raw_combined_data.csv")
     agent = nsgaii_agent(model=e)
     try:
         agent.run()
