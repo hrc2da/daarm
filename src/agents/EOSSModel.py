@@ -21,7 +21,7 @@ class EOSSModel:
     def __init__(self, predata_path=""):
         self.cost_model = self.build_cost_model()
         self.configs = {}
-        self.batch_size = 1
+        self.batch_size = 5
         self.configs['0' * 60] = (0, 0)
         self.science_model = self.build_science_model()
         if(predata_path):
@@ -38,22 +38,27 @@ class EOSSModel:
 
     def handle_evaluate_config(self, req):
         config = np.array(self.conv_bit_list(req['config'])).reshape(1, -1)
-        return [self.science_model.predict(config)[0][0], self.cost_model.predict(config)[0][1]]
+        science = self.science_model.predict(config)[0][0]
+        cost = self.cost_model.predict(config)[0]
+        #print(science)
+        #print(cost)
+        return [science, cost]
 
     @staticmethod
     def conv_bit_list(bitstring):
         return np.array([int(bit) for bit in bitstring])
 
     def build_science_model(self):
-        model = load_model('/home/hrc2/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
+        model = load_model('/home/dev/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
+        return model
 
     def build_model(self):
         model = load_model('/home/dev/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
         return model
 
     def build_cost_model(self):
-        with open("cost_model.pk", 'rb') as pk_file:
-            model = pk.load(pk_file)
+        with open("/home/dev/catkin_ws_kinova/src/daarm/src/agents/cost_model.pk", 'rb') as pk_file:
+            model = pk.load(pk_file).cost_model #this is ridiculous. we pickled the wrong thing.
         return model
 
     def train_model(self):
@@ -61,7 +66,7 @@ class EOSSModel:
                       for config in self.configs.keys()])
         science,cost = map(np.array, zip(*self.configs.values()))
         self.cost_model.fit(X, cost)
-        self.science_model.fit(X, science)
+        self.science_model.fit(X, science, epochs=2)
         #xTr, xTe, yTr, yTe = train_test_split(X, Y, shuffle = True)
         # self.model.fit(xTr,yTr)
 
