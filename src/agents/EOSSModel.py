@@ -49,7 +49,7 @@ class EOSSModel:
         return np.array([int(bit) for bit in bitstring])
 
     def build_science_model(self):
-        model = load_model('/home/dev/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
+        model = load_model('/home/nikhildhawan/catkin_ws/src/daarm/src/agents/science_nn_model.h5')
         return model
 
     def build_model(self):
@@ -57,7 +57,7 @@ class EOSSModel:
         return model
 
     def build_cost_model(self):
-        with open("/home/dev/catkin_ws_kinova/src/daarm/src/agents/cost_model.pk", 'rb') as pk_file:
+        with open("/home/nikhildhawan/catkin_ws/src/daarm/src/agents/cost_model.pk", 'rb') as pk_file:
             model = pk.load(pk_file).cost_model #this is ridiculous. we pickled the wrong thing.
         return model
 
