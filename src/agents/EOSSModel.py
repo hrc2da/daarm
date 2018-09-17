@@ -46,8 +46,10 @@ class EOSSModel:
 
     def build_science_model(self):
         model = load_model('/home/hrc2/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
-        return model
 
+    def build_model(self):
+        model = load_model('/home/dev/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
+        return model
 
     def build_cost_model(self):
         with open("cost_model.pk", 'rb') as pk_file:

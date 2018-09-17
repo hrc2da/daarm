@@ -16,21 +16,31 @@ from EOSSModel import EOSSModel
 import rospy
 from std_msgs.msg import String
 #from daarm.srv import *
+import time
+import logging
 
 
 class DA_NSGAII(NSGAII):
+    PUBLISH_BATCH = 100
     def __init__(self, problem, population_size=100, generator=RandomGenerator(), selector=TournamentSelector(2),
                  variator=None, archive=None, injection_probability = 1, **kwargs):
         super(DA_NSGAII, self).__init__(problem, population_size, generator,
                                         selector, variator, archive, **kwargs)
+        self.logger = logging.getLogger()
+        self.logger = logging.getLogger("nsgaii logger")
+        filehandler = logging.FileHandler('./dalogs/nsgaii.log')
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(filehandler)
+        #self.logger.basicConfig(filename='./dalogs/nsgaii.log',level=logging.DEBUG)
         rospy.init_node('da_nsgaii')
+        self.population_publisher = rospy.Publisher('/populations',String, queue_size=10)
+        self.generation_count = 0
         self.injection_probability = injection_probability
         self.observed_configs = Queue()
         self.config_listener = rospy.Subscriber(
             '/configs', String, self.observe_new_configs)
 
     def observe_new_configs(self, message):
-	print("Length of queue",self.observed_configs.qsize())
         config = json.loads(message.data)["config"]
         solution_config = self.bitstring2solution(config)
         self.observed_configs.put(solution_config)
@@ -47,9 +57,7 @@ class DA_NSGAII(NSGAII):
         for _ in range(num_observed_configs):
             try:
                 config = self.observed_configs.get()
-		print("config",  str(config))
                 if (np.random.uniform(0,1) <= self.injection_probability):
-		    print("prob succ")
                     chosen_configs.append(config)
             except Empty:
                 continue
@@ -57,21 +65,32 @@ class DA_NSGAII(NSGAII):
 
     def iterate(self):
         offspring = []
-        
+        self.generation_count +=1
         while len(offspring) < self.population_size:
             parents = self.selector.select(self.variator.arity, self.population)
             offspring.extend(self.variator.evolve(parents))
-	print("before injection: ",len(offspring))
-	chosen_configs = self.choose_observed_configs()
-	print("chosen_configs: ", len(chosen_configs))
+        #print("before injection: ",len(offspring))
+        chosen_configs = self.choose_observed_configs()
+        #print("chosen_configs: ", len(chosen_configs))
         offspring.extend(chosen_configs)
-	print("after injection: ",len(offspring))
+        #print("after injection: ",len(offspring))
         self.evaluate_all(offspring)
         
         offspring.extend(self.population)
         nondominated_sort(offspring)
         self.population = nondominated_truncate(offspring, self.population_size)
-        
+        logtime = time.time()
+        publish_set = []
+        for sol in self.population:
+            config = ''.join([str(int(x)) for x in sol.variables[0]])
+            science,cost = sol.objectives
+            self.logger.info("{},{},{},{},{}".format(self.generation_count,logtime,config,science,cost))
+            publish_set.append({"config":config,"cost":float(cost),"science":float(science)})
+        if(self.generation_count % self.PUBLISH_BATCH == 0):
+            #print("publish set",publish_set)
+            msg = String()
+            msg.data = json.dumps(publish_set)
+            self.population_publisher.publish(msg)
         if self.archive is not None:
             self.archive.extend(self.population)
 
@@ -124,7 +143,7 @@ class nsgaii_agent:
 
 
 if __name__ == "__main__":
-    e = EOSSModel("/home/hrc2/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
+    e = EOSSModel("/home/dev/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
     agent = nsgaii_agent(model=e)
     try:
         agent.run()

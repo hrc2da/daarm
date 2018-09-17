@@ -18,10 +18,15 @@ class ConfigEvaluator:
 
 	ACTION_DELAY = 10 #the minimum time in sec's between sending new configs
 	
-	def __init__(self):
+	def __init__(self,eval_type="single"):
 		rospy.init_node("config_evaluator",anonymous=True)
 		self.target_publisher = rospy.Publisher("config_targets", String, queue_size=10)
-		rospy.Subscriber("/configs", String, self.eval_config)
+		if(eval_type=="genetic"):
+			self.counter = 0
+			self.BATCH_SIZE = 1
+			rospy.Subscriber("/populations", String, self.update_pop)
+		else:
+			rospy.Subscriber("/configs", String, self.eval_config)
 		self.last_message_time = time.time()
 		rospy.sleep(1)
 
@@ -38,6 +43,9 @@ class ConfigEvaluator:
 		print("PARETO FRONT:",pareto_front)
 		if(len(self.configs)-1 in pareto_front):
 			print("Sending target config")
+			#remove the config so we don't build it twice
+			self.config_strings.pop(-1)
+			self.configs.pop(-1)
 			msg = String()
 			msg.data = cur_config["config"]
 			self.last_message_time = time.time()
@@ -49,7 +57,32 @@ class ConfigEvaluator:
 			self.configs.pop(config_to_pop)
 			msg = String()
 			msg.data = target
+			self.last_message_time = time.time()
 			self.target_publisher.publish(msg)
+
+	def update_pop(self,message):
+		'''
+		update a batch of configs (for gen alg)
+		'''
+		print("updating pop")
+		self.counter += 1
+		new_pop = json.loads(message.data)
+		self.config_strings.extend([c["config"] for c in new_pop])
+		self.configs.extend([[c["cost"],-c["science"]] for c in new_pop])
+		
+		#truncate the pop
+		pareto_indices = self.is_pareto_efficient_indexed(np.array(self.configs),False)
+		self.config_strings = [self.config_strings[i] for i in pareto_indices]
+		self.configs = [self.configs[i] for i in pareto_indices]
+		if self.counter % self.BATCH_SIZE == 0 and time.time()-self.last_message_time > self.ACTION_DELAY:
+			print("sending target")
+			target = self.config_strings.pop(0)
+			self.configs.pop(0)
+			msg = String()
+			msg.data = target
+			self.last_message_time = time.time()
+			self.target_publisher.publish(msg)
+		
 	#stolen from https://stackoverflow.com/questions/32791911/fast-calculation-of-pareto-front-in-python
 	def is_pareto_efficient_indexed(self,costs, return_mask = True):  # <- Fastest for many points
 	    	"""
@@ -81,7 +114,9 @@ class ConfigEvaluator:
 
 if __name__ == '__main__':
 	try:
-		ce = ConfigEvaluator()
+		eval_type = rospy.get_param('eval_type', 'single')
+		print eval_type
+		ce = ConfigEvaluator(eval_type)
 		rospy.spin()
 	except rospy.ROSInterruptException:
 		pass
