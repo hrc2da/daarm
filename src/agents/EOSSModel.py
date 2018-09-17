@@ -4,6 +4,7 @@ import csv
 from std_msgs.msg import String
 
 import numpy as np
+import pickle as pk
 from sklearn.linear_model import LinearRegression as LR
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVR
@@ -18,14 +19,14 @@ import json
 
 class EOSSModel:
     def __init__(self, predata_path=""):
-        self.model = LR()
+        self.cost_model = self.build_cost_model()
         self.configs = {}
         self.batch_size = 1
         self.configs['0' * 60] = (0, 0)
-        self.science_model = self.build_model()
+        self.science_model = self.build_science_model()
         if(predata_path):
             self.load_data(predata_path)
-        self.train_model()
+            self.train_model()
         #self.initevaluate_server()
         rospy.Subscriber("/configs", String, self.add_training_point)
 
@@ -37,28 +38,35 @@ class EOSSModel:
 
     def handle_evaluate_config(self, req):
         config = np.array(self.conv_bit_list(req['config'])).reshape(1, -1)
-        return [self.science_model.predict(config)[0][0], self.model.predict(config)[0][1]]
+        return [self.science_model.predict(config)[0][0], self.cost_model.predict(config)[0][1]]
 
     @staticmethod
     def conv_bit_list(bitstring):
         return np.array([int(bit) for bit in bitstring])
 
-    def build_model(self):
+    def build_science_model(self):
         model = load_model('/home/hrc2/catkin_ws_kinova/src/daarm/src/agents/science_nn_model.h5')
+        return model
+
+
+    def build_cost_model(self):
+        with open("cost_model.pk", 'rb') as pk_file:
+            model = pk.load(pk_file)
         return model
 
     def train_model(self):
         X = np.array([self.conv_bit_list(config)
                       for config in self.configs.keys()])
-        Y = np.array(self.configs.values())
-        self.model.fit(X, Y)
+        science,cost = map(np.array, zip(*self.configs.values()))
+        self.cost_model.fit(X, cost)
+        self.science_model.fit(X, science)
         #xTr, xTe, yTr, yTe = train_test_split(X, Y, shuffle = True)
         # self.model.fit(xTr,yTr)
 
     def init_evaluate_server(self):
         rospy.init_node('EOSS_model_server')
         s = rospy.Service('EOSS_model_evaluator',
-                          EOSSEstimate, handle_evaluate_config)
+                          EOSSEstimate, self.handle_evaluate_config)
         rospy.spin()
 
     def load_data(self, path):
@@ -75,4 +83,4 @@ class EOSSModel:
 
 
 if __name__ == '__main__':
-    m = EOSSModel("/home/hrc2/catkin_ws_kinova/src/daarm/src/model/raw_combined_data.csv")
+    m = EOSSModel()
