@@ -110,7 +110,7 @@ cost
 
 class nsgaii_agent:
     def __init__(self, session_id=None, model=None):
-        self.n_iters = 100000
+        self.n_iters = 1000000
         self.model = model
         self.session_id = session_id
         self.problem = Problem(1, 2)
@@ -130,7 +130,7 @@ class nsgaii_agent:
             return result
 
     def run(self):
-        algorithm = DA_NSGAII(self.problem, population_size=50)
+        algorithm = DA_NSGAII(self.problem, population_size=50, injection_probability=0)
         algorithm.run(self.n_iters)
         #s = requests.Session()
         #s.post("https://www.selva-research.com/api/daphne/set-problem",
@@ -144,6 +144,7 @@ class nsgaii_agent:
 
 if __name__ == "__main__":
     e = EOSSModel("/home/nikhildhawan/catkin_ws/src/daarm/model/raw_combined_data.csv")
+    #e = EOSSModel("/home/dev/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
     agent = nsgaii_agent(model=e)
     try:
         agent.run()
