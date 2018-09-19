@@ -6,6 +6,7 @@ import json
 import numpy as np
 from functools import reduce
 import requests
+import pickle as pk
 from Queue import Queue, Empty
 from platypus.operators import TournamentSelector, RandomGenerator
 #from schwimmbad import MultiPool
@@ -39,6 +40,7 @@ class DA_NSGAII(NSGAII):
         self.observed_configs = Queue()
         self.config_listener = rospy.Subscriber(
             '/configs', String, self.observe_new_configs)
+
 
     def observe_new_configs(self, message):
         config = json.loads(message.data)["config"]
@@ -110,7 +112,8 @@ cost
 
 class nsgaii_agent:
     def __init__(self, session_id=None, model=None):
-        self.n_iters = 100000
+        print "INITIALIZING"
+        self.n_iters = 100
         self.model = model
         self.session_id = session_id
         self.problem = Problem(1, 2)
@@ -118,6 +121,8 @@ class nsgaii_agent:
         self.problem.function = self.evaluate
         self.problem.directions = [
             self.problem.MAXIMIZE, self.problem.MINIMIZE]
+
+        
 
     def evaluate(self, config):
         # convert config to bitstring
@@ -130,8 +135,14 @@ class nsgaii_agent:
             return result
 
     def run(self):
-        algorithm = DA_NSGAII(self.problem, population_size=50)
+        algorithm = DA_NSGAII(self.problem, population_size=50, injection_probability=0)
         algorithm.run(self.n_iters)
+        print "Saving EOSSModel"
+        curr_time = str(time.time())
+        path = "/home/nikhildhawan/.ros/dalogs/"
+        self.model.science_model.save(path+"science_model"+curr_time+".h5")
+        with open(path+"cost_model"+curr_time+".pk", "wb") as pk_file:
+            pk.dump(self.model.cost_model, pk_file)
         #s = requests.Session()
         #s.post("https://www.selva-research.com/api/daphne/set-problem",
         #       json={"problem": "ClimateCentric"})
@@ -143,7 +154,8 @@ class nsgaii_agent:
 
 
 if __name__ == "__main__":
-    e = EOSSModel("/home/dev/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
+    e = EOSSModel("/home/nikhildhawan/catkin_ws/src/daarm/model/raw_combined_data.csv")
+    #e = EOSSModel("/home/dev/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
     agent = nsgaii_agent(model=e)
     try:
         agent.run()
