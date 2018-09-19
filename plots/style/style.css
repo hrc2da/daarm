@@ -1,0 +1,23 @@
+html * {}
+
+#title {
+    font-family: 'Playfair Display';
+    color: rgb(113, 120, 128);
+}
+
+body {
+    /* !important needed to change color w. bootstrap */
+    background-color: white !important;
+}
+
+.label {
+    font-family: 'Helvetica Neue';
+    fill: rgb(113, 120, 128);
+    color: rgb(113, 120, 128);
+    font-size: 10px;
+}
+
+#model_num {
+    margin-left: 3.5%;
+    width: 85%;
+}
