@@ -24,6 +24,7 @@ async function parseJson(w, h, padding) {
     let x_axis = d3.axisBottom().scale(x_scale);
     let y_axis = d3.axisLeft().scale(y_scale);
 
+    //map functions for scaling pts
     x_map = function (d) {
         return x_scale(d[0]);
     }
@@ -31,6 +32,7 @@ async function parseJson(w, h, padding) {
         return y_scale(d[1]);
     }
 
+    //place x-axis on svg
     svg.append("g")
         .attrs({
             class: 'x_axis',
@@ -46,6 +48,7 @@ async function parseJson(w, h, padding) {
         .style("text-anchor", "end")
         .text("Science Benefit");
 
+    //place y-axis on svg
     svg.append("g")
         .attrs({
             transform: 'translate(' + padding + ', 0)'
@@ -60,6 +63,7 @@ async function parseJson(w, h, padding) {
         .text("Cost");
 
 
+    //plot eoss plot
     for (let pt of eoss_results.data) {
         svg.append('circle')
             .attrs({
@@ -70,7 +74,7 @@ async function parseJson(w, h, padding) {
                 fill: '#009999'
             })
     }
-
+    //plot pretrained plot
     for (let pt of pretrained_results.data) {
         svg.append('circle')
             .attrs({
@@ -81,7 +85,7 @@ async function parseJson(w, h, padding) {
                 fill: '#ffaa00'
             })
     }
-
+    //plot first model plot
     let currModel = 0;
     for (let pt of model_results[currModel].data) {
         svg.append('circle')
@@ -94,7 +98,7 @@ async function parseJson(w, h, padding) {
             })
     }
 
-
+    //define position of slider based on size of plot
     d3.select("#model_num")
         .style('width', w - 3.75 * padding + "px")
         .style('margin-left', padding + "px");
@@ -102,7 +106,7 @@ async function parseJson(w, h, padding) {
     return [eoss_results, pretrained_results, model_results]
 }
 
-
+//update model/model data distribution on slider change.
 function updateModel(model_num) {
     svg = d3.select("#plt_svg");
     d3.selectAll('.model_pt').remove();
