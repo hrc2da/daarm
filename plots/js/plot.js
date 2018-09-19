@@ -1,5 +1,5 @@
-async function parseJson(w, h, padding) {
-    const data = await d3.json('../data/formatted_results.json');
+async function parseJson(filename, w, h, padding) {
+    const data = await d3.json(filename);
     eoss_results = data[0];
     pretrained_results = data[1];
     model_results = [];
@@ -16,8 +16,8 @@ async function parseJson(w, h, padding) {
 
     let min_cost = 0;
     let min_science = 0;
-    let max_cost = 20000;
-    let max_science = 1.0;
+    let max_cost = 10000;
+    let max_science = 1;
 
     let x_scale = d3.scaleLinear().domain([min_science, max_science]).range([padding, w - padding]);
     let y_scale = d3.scaleLinear().domain([min_cost, max_cost]).range([h - padding, padding]);
@@ -26,10 +26,12 @@ async function parseJson(w, h, padding) {
 
     //map functions for scaling pts
     x_map = function (d) {
-        return x_scale(d[0]);
+        let input = Math.max(Number(d[0]), 0);
+        return x_scale(input);
     }
     y_map = function (d) {
-        return y_scale(d[1]);
+        let input = Math.max(Number(d[1]), 0);
+        return y_scale(input);
     }
 
     //place x-axis on svg
@@ -70,19 +72,30 @@ async function parseJson(w, h, padding) {
                 class: 'eoss_pt',
                 cx: x_map(pt),
                 cy: y_map(pt),
+                r: 4,
+                fill: '#009999',
+                opacity: 0.7
+            })
+        svg.append('circle')
+            .attrs({
+                class: 'eoss_pt',
+                cx: x_map(pt),
+                cy: y_map(pt),
                 r: 2,
-                fill: '#009999'
+                fill: '#ffffff'
             })
     }
     //plot pretrained plot
     for (let pt of pretrained_results.data) {
-        svg.append('circle')
+        svg.append('rect')
             .attrs({
                 class: 'pretrained_pt',
-                cx: x_map(pt),
-                cy: y_map(pt),
-                r: 2,
-                fill: '#ffaa00'
+                x: x_map(pt),
+                y: y_map(pt),
+                width: 5,
+                height: 5,
+                fill: '#ffaa00',
+                opacity: 0.7
             })
     }
     //plot first model plot
