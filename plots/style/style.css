@@ -1,7 +1,8 @@
-html * {}
+html * {
+}
 
 #title {
-    font-family: 'Playfair Display';
+    font-family: "Playfair Display";
     color: rgb(113, 120, 128);
 }
 
@@ -11,7 +12,7 @@ body {
 }
 
 .label {
-    font-family: 'Helvetica Neue';
+    font-family: "Helvetica Neue";
     fill: rgb(113, 120, 128);
     color: rgb(113, 120, 128);
     font-size: 10px;
@@ -20,4 +21,16 @@ body {
 #model_num {
     margin-left: 3.5%;
     width: 85%;
+}
+
+#legend_key {
+    font-family: "Helvetica Neue";
+    fill: rgb(0, 0, 0);
+    font-size: 16px;
+}
+
+.button_label {
+    font-family: "Helvetica Neue";
+    fill: rgb(255, 255, 255);
+    font-size: 10px;
 }
