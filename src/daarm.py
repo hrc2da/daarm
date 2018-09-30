@@ -4,8 +4,11 @@ import rospy
 import random
 import numpy as np
 from moveit_commander import MoveGroupCommander, RobotCommander, PlanningSceneInterface
+from moveit_msgs.msg import Constraints, JointConstraint
 from geometry_msgs.msg import PoseStamped, Point, Quaternion
 from std_msgs.msg import String
+
+import math
 
 class DAArm:
 	'''
@@ -22,6 +25,8 @@ class DAArm:
 	ORBITS = [[-0.235,-0.14],[-0.3175,-0.235],[-0.4191,-0.3175],[-0.51435,-0.4191],[-0.6096,-0.51435]]
 	MARGIN_THRESHOLD = 0.05 #make this around half the width of a block
 
+	JOINT_NAMES = ['j2s7s300_joint_1', 'j2s7s300_joint_2', 'j2s7s300_joint_3', 'j2s7s300_joint_4', 'j2s7s300_joint_5', 'j2s7s300_joint_6', 'j2s7s300_joint_7', 'j2s7s300_joint_finger_1', 'j2s7s300_joint_finger_2', 'j2s7s300_joint_finger_3']
+
 	SUPPLY = {"A":[0.02,-0.3],"B":[0.12,-0.3],"C":[0.02,-0.36],"D":[0.12,-0.36],"E":[0.02,-0.42],"F":[0.12,-0.42],"G":[0.02,-0.48],"H":[0.12,-0.48],"I":[0.02,-0.54],"J":[0.12,-0.54],"K":[0.02,-0.6],"L":[0.12,-0.6]}
 	def __init__(self):
 		rospy.init_node("daarm",anonymous=True) #in case we want more than one
@@ -35,6 +40,29 @@ class DAArm:
 		self.robot = RobotCommander()
 		self.arm = MoveGroupCommander("arm")
 		self.gripper = MoveGroupCommander("gripper")
+		self.constraints = Constraints()
+		self.j1constraint = JointConstraint()
+		self.j1constraint.joint_name = self.JOINT_NAMES[0]
+		self.j1constraint.position = 5
+		self.j1constraint.tolerance_above = 1
+		self.j1constraint.tolerance_below = 1
+		self.j2constraint = JointConstraint()
+		self.j2constraint.joint_name = self.JOINT_NAMES[1]
+		self.j2constraint.position = 3*math.pi/4
+		self.j2constraint.tolerance_above = 1
+		self.j2constraint.tolerance_below = 1
+		self.j4constraint = JointConstraint()
+		self.j4constraint.joint_name = self.JOINT_NAMES[3]
+		self.j4constraint.position = math.pi/2
+		self.j4constraint.tolerance_above = math.pi/4
+		self.j4constraint.tolerance_below = math.pi/4
+		#self.constraints.joint_constraints.append(self.j2constraint)
+		#self.constraints.joint_constraints.append(self.j4constraint)
+		self.constraints.joint_constraints.append(self.j1constraint)
+		#self.arm.set_path_constraints(self.constraints)
+		self.arm.set_num_planning_attempts(10)
+		self.arm.set_goal_position_tolerance(0.01)
+		print("constraints:",self.arm.get_path_constraints())
 		self.pose = self.arm.get_current_pose()
 		self.initScene()
 		self.arm.set_max_velocity_scaling_factor(1)
@@ -109,7 +137,7 @@ class DAArm:
 			vacant = self.is_vacant(target_x,target_y)
 		print("adding block")
 		self.pick_block(pick_block["x"],pick_block["y"])
-		rospy.sleep(1)
+		rospy.sleep(0.5)
 		self.place_block(target_x,target_y)
 	def remove_block(self,block,orbit):
 		print("removing block")
@@ -150,7 +178,7 @@ class DAArm:
 		plan = self.arm.plan()
 		#joint_goals = plan.joint_trajectory.points[-1].positions
 		self.arm.go(wait=True)
-		rospy.sleep(1)
+		rospy.sleep(0.5)
 		#cur_joints = self.arm.get_current_joint_values()
 		#print(cur_joints)
 		#print(joint_goals)
@@ -181,10 +209,10 @@ class DAArm:
 		p.pose.orientation = Quaternion(0,1,0,0)
 		self.arm.set_pose_target(p)
 		self.arm.go(wait=True)
-		rospy.sleep(1)
+		rospy.sleep(0.5)
 		self.arm.set_pose_target(p)
 		self.arm.go(wait=True)
-		rospy.sleep(1)
+		rospy.sleep(0.5)
 		p.pose.position.z = self.BLOCK_RELEASE_HEIGHT
 		self.arm.set_pose_target(p)
 		self.arm.go(wait=True)
@@ -244,7 +272,7 @@ class DAArm:
 		self.tuiPose.pose.position = Point(0.3556,-0.343,-0.51)
 		self.tuiDimension = (0.9906, 0.8382, 0.8636)
 		self.wallPose.pose.position = Point(-0.508, -0.343 ,-0.3048)
-		self.wallDimension = (0.6096, 2 , 1.27)
+		self.wallDimension = (0.6096, 2 , 1.35)
 		rospy.sleep(2)
 		self.scene.add_box("tui", self.tuiPose, self.tuiDimension)
 		self.scene.add_box("wall", self.wallPose, self.wallDimension)

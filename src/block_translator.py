@@ -18,14 +18,14 @@ class BlockTranslator:
 	#J_Y_MIN = -0.17
 	#J_X_MAX = 1.00
 	#J_X_MIN = 0.44
-
+	J_X_MIN = None
 	J_Y_DIST = 0.51
-	J_X_DIST = 0.56
+	J_X_DIST = 0.86 #0.56
 
-	T_Y_MAX = 0.96
-	T_Y_MIN = 0.33
-	T_X_MAX = 0.77
-	T_X_MIN = 0.14
+	T_Y_MAX = 0.759 #0.96
+	T_Y_MIN = 0.213 #0.33
+	T_X_MAX = 0.838 #0.77
+	T_X_MIN = 0.176 #0.14
 
 	T_Y_DIST = T_Y_MAX-T_Y_MIN
 	T_X_DIST = T_X_MAX-T_X_MIN
@@ -74,7 +74,7 @@ class BlockTranslator:
 		arm.set_pose_target(curpos)
 		arm.go()
 		arm.go()
-		curpos.pose.position.z = 0.05
+		curpos.pose.position.z = 0.03
 		arm.set_pose_target(curpos)
 		arm.go()
 		gripper.set_named_target("Open")
@@ -119,6 +119,8 @@ class BlockTranslator:
 		blocks = eval(message.data)
 		#print(blocks)
 		self.last_blocks = blocks
+		if self.J_X_MIN is None:
+			return
 		jaco_blocks = [self.translate(b) for b in blocks]
 		msg = String()
 		msg.data=str(jaco_blocks)
