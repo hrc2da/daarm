@@ -1,0 +1,12 @@
+<launch>
+ 
+  <!--Fake TUI and arm-->
+  <node pkg="daarm" type="faketui.py" name="faketuir" output="screen"/>
+
+  <!--Config Evaluator-->
+  <param name="eval_type" type="string" value="genetic" />
+  <node pkg="daarm" type="config_evaluator.py" name="config_evaluator" output="screen"/>
+
+  <!--nsgaii agent-->
+  <node pkg="daarm" type="nsgaii.py" name="nsgaii_agent" output="screen"/>
+</launch>
