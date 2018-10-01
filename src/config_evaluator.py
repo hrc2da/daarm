@@ -16,7 +16,7 @@ class ConfigEvaluator:
 
 	config_strings = []
 
-	ACTION_DELAY = 10 #the minimum time in sec's between sending new configs
+	ACTION_DELAY = 0 #the minimum time in sec's between sending new configs
 	
 	def __init__(self,eval_type="single"):
 		rospy.init_node("config_evaluator",anonymous=True)

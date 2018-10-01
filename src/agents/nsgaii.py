@@ -14,6 +14,7 @@ from platypus import NSGAII, Problem, Type, Real, Binary, Integer, ProcessPoolEv
 from platypus.config import default_variator
 from platypus.core import nondominated_sort, nondominated_truncate, Solution
 from EOSSModel import EOSSModel
+from EOSSSingleModel import EOSSSingleModel
 import rospy
 from std_msgs.msg import String
 #from daarm.srv import *
@@ -76,9 +77,11 @@ class DA_NSGAII(NSGAII):
         #print("chosen_configs: ", len(chosen_configs))
         offspring.extend(chosen_configs)
         #print("after injection: ",len(offspring))
-        self.evaluate_all(offspring)
         
         offspring.extend(self.population)
+        for o in offspring:
+            o.evaluated = False
+        self.evaluate_all(offspring)
         nondominated_sort(offspring)
         self.population = nondominated_truncate(offspring, self.population_size)
         logtime = time.time()
@@ -113,7 +116,7 @@ cost
 class nsgaii_agent:
     def __init__(self, session_id=None, model=None):
         print "INITIALIZING"
-        self.n_iters = 100
+        self.n_iters = 1000000
         self.model = model
         self.session_id = session_id
         self.problem = Problem(1, 2)
@@ -129,17 +132,19 @@ class nsgaii_agent:
         # call EOSSModel service
         # rospy.wait_for_service('EOSS_model_evaluator')
         #result = rospy.ServiceProxy('EOSS_model_evaluator', EOSSEstimate)
+        #print("EVALUATING CONFIG WITH UPDATED MODEL")
         if(self.model):
             msg = {"config": "".join([str(int(x)) for x in config[0]])}
+           # print("current cost model",self.model.cost_model.coef_)
             result = self.model.handle_evaluate_config(msg)
             return result
 
     def run(self):
-        algorithm = DA_NSGAII(self.problem, population_size=50, injection_probability=0)
+        algorithm = DA_NSGAII(self.problem, population_size=50, injection_probability=1)
         algorithm.run(self.n_iters)
         print "Saving EOSSModel"
         curr_time = str(time.time())
-        path = "/home/nikhildhawan/.ros/dalogs/"
+        path = "/home/dev/.ros/dalogs/"
         self.model.science_model.save(path+"science_model"+curr_time+".h5")
         with open(path+"cost_model"+curr_time+".pk", "wb") as pk_file:
             pk.dump(self.model.cost_model, pk_file)
@@ -154,7 +159,7 @@ class nsgaii_agent:
 
 
 if __name__ == "__main__":
-    e = EOSSModel("/home/nikhildhawan/catkin_ws/src/daarm/model/raw_combined_data.csv")
+    e = EOSSModel()
     #e = EOSSModel("/home/dev/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
     agent = nsgaii_agent(model=e)
     try:
