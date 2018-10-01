@@ -2,7 +2,7 @@
 
 import rospy
 from std_msgs.msg import String
-
+import time
 
 class ConfigToAction:
 
@@ -11,15 +11,19 @@ class ConfigToAction:
 	ORBITS = [[-0.235,-0.14],[-0.3175,-0.235],[-0.4191,-0.3175],[-0.51435,-0.4191],[-0.6096,-0.51435]]
 
 	ORBIT_HORIZONTAL_BOUNDS = [0.25,0.45]
-
+	ACTION_DELAY = 10*1000 #10 seconds
 
 	def __init__(self):
 		rospy.init_node("config_to_action",anonymous=True)
 		self.current_config = []
 		self.add_publisher = rospy.Publisher("add_block", String, queue_size=10)
 		self.remove_publisher = rospy.Publisher("remove_block", String, queue_size=10)
+		self.home_publisher = rospy.Publisher("jaco_home", String, queue_size=10)
 		rospy.Subscriber("/config_targets", String, self.generate_action)
 		rospy.Subscriber("/jaco_blocks", String, self.update_current_config)
+		rospy.Subscriber("/jaco_moving", String, self.update_jaco_state)
+		self.moves_pending = 0
+		self.last_action_completed = 0
 		rospy.sleep(1)
 
 	def update_current_config(self,message):
@@ -44,7 +48,17 @@ class ConfigToAction:
 			raw_btstr = raw_btstr[:index] + '1' + raw_btstr[index+1:] #b/c can't modify string
 		return raw_btstr
 
+	def update_jaco_state(self,message):
+		if(message.data == "False"):
+			self.moves_pending -= 1
+			if(self.moves_pending <1):
+				self.last_action_completed = message.header.stamp
+				self.home_publisher.publish(String())
+
 	def generate_action(self,message):
+		if(self.moves_pending >0 or time.time()-self.last_action_completed < self.ACTION_DELAY):
+			print("skipping action due to ongoing or too recently completed action")
+			return
 		print("generating action")
 		target_btstr = message.data
 		print("target:",target_btstr)
@@ -55,6 +69,7 @@ class ConfigToAction:
 			return
 		action_indices = [i for i,b in enumerate(target_btstr) if b != cur_btstr[i]]
 		print(action_indices)
+		self.moves_pending = len(action_indices)
 		for action in action_indices:
 			orbit = action/12
 			block = self.BLOCKS[action%12]

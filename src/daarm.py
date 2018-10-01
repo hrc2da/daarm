@@ -35,7 +35,10 @@ class DAArm:
 		self.add_blocks_subscriber = rospy.Subscriber("/add_block", String, self.add_block_wrapper)
 		self.remove_blocks_subscriber = rospy.Subscriber("/remove_block", String, self.remove_block_wrapper)
 		self.block_update_subscriber = rospy.Subscriber("/jaco_blocks", String, self.update_current_config)
+		self.moving_publisher = rospy.Publisher("/jaco_moving", String, queue_size=1)
+		self.home_subscriber = rospy.Subscriber("/jaco_home", String, self.home_arm)
 		rospy.sleep(1)
+
 		self.scene = PlanningSceneInterface()
 		self.robot = RobotCommander()
 		self.arm = MoveGroupCommander("arm")
@@ -123,6 +126,10 @@ class DAArm:
 	def add_block(self,block,orbit):
 		#look up the block supply location
 		#supply_loc = self.SUPPLY[block]
+		msg = String()
+		msg.data = "true"
+		msg.header.stamp = rospy.Time.now()
+		self.moving_publisher.publish(msg)
 		pick_block = self.get_config_block(block,False)
 		if pick_block is None:
 			print("Target block to add is not available in staging area. Aborting.")
@@ -139,8 +146,16 @@ class DAArm:
 		self.pick_block(pick_block["x"],pick_block["y"])
 		rospy.sleep(0.5)
 		self.place_block(target_x,target_y)
+		msg.data = "false"
+		msg.header.stamp = rospy.Time.now()
+		self.moving_publisher.publish(msg)
+
 	def remove_block(self,block,orbit):
 		print("removing block")
+		msg = String()
+		msg.data = "True"
+		msg.header.stamp = rospy.Time.now()
+		self.moving_publisher.publish(msg)
 		supply_loc = self.SUPPLY[block]
 		target_block = self.get_config_block(block,orbit)
 		if(target_block is not None):
@@ -149,7 +164,11 @@ class DAArm:
 			self.place_block(supply_loc[0],supply_loc[1])
 		else:
 			print("No matching block found on table!")
-			return
+		msg.data = "False"
+		msg.header.stamp = rospy.Time.now()
+		self.moving_publisher.publish(msg)
+		return
+
 	def home_arm(self):
 		#this doesn't go to the default home position, but one we've found to be better for planning
 		print("homing arm")
@@ -165,8 +184,10 @@ class DAArm:
 		for i,goal in enumerate(joint_goals):
 			cur_joint_angles[i] = goal
 		return cur_joint_angles 
+
 	def pick_block(self,x,y):
 		print("picking")
+		
 		self.gripper.set_named_target("Open")
 		self.gripper.go(wait=True)
 		p = self.pose
