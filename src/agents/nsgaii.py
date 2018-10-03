@@ -14,7 +14,7 @@ from platypus import NSGAII, Problem, Type, Real, Binary, Integer, ProcessPoolEv
 from platypus.config import default_variator
 from platypus.core import nondominated_sort, nondominated_truncate, Solution
 from EOSSModel import EOSSModel
-from EOSSSingleModel import EOSSSingleModel
+#from EOSSSingleModel import EOSSSingleModel
 import rospy
 from std_msgs.msg import String
 #from daarm.srv import *
@@ -30,7 +30,7 @@ class DA_NSGAII(NSGAII):
                                         selector, variator, archive, **kwargs)
         self.logger = logging.getLogger()
         self.logger = logging.getLogger("nsgaii logger")
-        filehandler = logging.FileHandler('./dalogs/nsgaii.log')
+        filehandler = logging.FileHandler('/home/dev/.ros/dalogs/nsgaii.log')
         self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(filehandler)
         #self.logger.basicConfig(filename='./dalogs/nsgaii.log',level=logging.DEBUG)
