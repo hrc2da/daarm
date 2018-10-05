@@ -17,8 +17,8 @@ from keras.wrappers.scikit_learn import KerasRegressor
 from sklearn.model_selection import train_test_split
 import json
 
-from science_model import build_model as bm
-from science_model import listify_config
+#from science_model import build_model as bm
+#from science_model import listify_config
 
 
 class EOSSModel:
