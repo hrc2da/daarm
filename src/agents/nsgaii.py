@@ -20,6 +20,9 @@ from std_msgs.msg import String
 #from daarm.srv import *
 import time
 import logging
+import requests
+import redis
+
 
 
 class DA_NSGAII(NSGAII):
@@ -114,8 +117,10 @@ cost
 
 
 class nsgaii_agent:
-    def __init__(self, session_id=None, model=None):
+    def __init__(self, session_id=None, model=None, use_surrogate=True):
         print "INITIALIZING"
+        self.EVAL_URI = "https://www.selva-research.com/api/vassar/evaluate-architecture"
+        self.SESSION_URI = "https://www.selva-research.com/api/daphne/set-problem"
         self.n_iters = 1000000
         self.model = model
         self.session_id = session_id
@@ -124,7 +129,22 @@ class nsgaii_agent:
         self.problem.function = self.evaluate
         self.problem.directions = [
             self.problem.MAXIMIZE, self.problem.MINIMIZE]
+        self.vassar_session = requests.session()
+        self.vassar_session.post(self.SESSION_URI,json={"problem":"ClimateCentric"})
+        self.cached_evals = redis.Redis(host="localhost",port=6379) #defaults
+        self.use_surrogate = use_surrogate
 
+    def evaluate_REST(self,config):
+        result = self.cached_evals.get(config)
+        if result is None:
+            packed_config = str([bool(int(x)) for x in config]).lower()
+            print("retreiving point")
+            response = self.vassar_session.post(self.EVAL_URI,json={"special":"False","inputs":packed_config})
+            print("retrieved point")
+            result = str(response.json()["outputs"])[1:-1] #weird thing to make the result a comma-sep string for consistency
+            self.cached_evals.set(config,result)
+        science,cost = map(float,result.split(','))
+        return science, cost
         
 
     def evaluate(self, config):
@@ -133,6 +153,10 @@ class nsgaii_agent:
         # rospy.wait_for_service('EOSS_model_evaluator')
         #result = rospy.ServiceProxy('EOSS_model_evaluator', EOSSEstimate)
         #print("EVALUATING CONFIG WITH UPDATED MODEL")
+        if (not self.use_surrogate):
+            print("eval point")
+            science, cost = self.evaluate_REST(config[0])
+            return [science, cost]
         if(self.model):
             msg = {"config": "".join([str(int(x)) for x in config[0]])}
            # print("current cost model",self.model.cost_model.coef_)
@@ -161,7 +185,7 @@ class nsgaii_agent:
 if __name__ == "__main__":
     e = EOSSModel()
     #e = EOSSModel("/home/dev/catkin_ws_kinova/src/daarm/model/raw_combined_data.csv")
-    agent = nsgaii_agent(model=e)
+    agent = nsgaii_agent(model=e, use_surrogate = False)
     try:
         agent.run()
     except Exception as e:
