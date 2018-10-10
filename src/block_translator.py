@@ -19,13 +19,18 @@ class BlockTranslator:
 	#J_X_MAX = 1.00
 	#J_X_MIN = 0.44
 	J_X_MIN = None
-	J_Y_DIST = 0.51
-	J_X_DIST = 0.86 #0.56
+	J_Y_DIST = 0.37
+	J_X_DIST = 0.770 #0.56
 
-	T_Y_MAX = 0.759 #0.96
-	T_Y_MIN = 0.213 #0.33
-	T_X_MAX = 0.838 #0.77
-	T_X_MIN = 0.176 #0.14
+	#tui space measured from table:
+	# topLeft = 0.95,0.106
+	# bottomLeft = 0.95, 0.88
+	# bottomRight = 0.06, 0.8
+	# topRight = 0.09, 0.17
+	T_Y_MAX = 0.8 #0.96
+	T_Y_MIN = 0.17 #0.33
+	T_X_MAX = 0.95 #0.77
+	T_X_MIN = 0.09 #0.14
 
 	T_Y_DIST = T_Y_MAX-T_Y_MIN
 	T_X_DIST = T_X_MAX-T_X_MIN
@@ -51,10 +56,10 @@ class BlockTranslator:
 			self.J_Y_MAX = self.J_Y_MIN+self.J_Y_DIST
 			return
 
-		rospy.sleep(60)
 		arm = MoveGroupCommander("arm")
 		arm.set_named_target("Home")
 		arm.go()
+		arm.set_num_planning_attempts(10)
 		gripper = MoveGroupCommander("gripper")
 		gripper.set_named_target("Open")
 		gripper.go()
@@ -74,7 +79,7 @@ class BlockTranslator:
 		arm.set_pose_target(curpos)
 		arm.go()
 		arm.go()
-		curpos.pose.position.z = 0.03
+		curpos.pose.position.z = 0.02
 		arm.set_pose_target(curpos)
 		arm.go()
 		gripper.set_named_target("Open")
