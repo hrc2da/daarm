@@ -17,24 +17,51 @@ def listify(string_config):
     return l_config
 
 
-with open("lhc_eval.json", "r+") as lhc_in:
+# with open("lhc_eval.json", "r+") as lhc_in:
+#     dat = json.load(lhc_in)
+#     for config, obj in dat.items():
+#         lhc_dat.append([listify(config), obj[0], obj[1]])
+
+# with open("random_eval.json", "r+") as ur_in:
+#     dat = json.load(ur_in)
+#     for config, obj in dat.items():
+#         ur_dat.append([listify(config), obj[0], obj[1]])
+
+# with open('lhc_train_test.csv', 'w+') as outfile:
+#     writer = csv.writer(outfile, delimiter=',')
+#     writer.writerow(['config', 'science_benefit', 'cost'])
+#     for row in lhc_dat:
+#         writer.writerow(row)
+
+# with open('ur_train_test.csv', 'w+') as outfile:
+#     writer = csv.writer(outfile, delimiter=',')
+#     writer.writerow(['config', 'science_benefit', 'cost'])
+#     for row in ur_dat:
+#         writer.writerow(row)
+
+lhc_dat = []
+with open('report/data/latin_hypercube_evaluations.json', 'r+') as lhc_in:
     dat = json.load(lhc_in)
     for config, obj in dat.items():
-        lhc_dat.append([listify(config), obj[0], obj[1]])
+        science, cost = map(float, obj.split(','))
+        lhc_dat.append([config, science, cost])
 
-with open("random_eval.json", "r+") as ur_in:
-    dat = json.load(ur_in)
-    for config, obj in dat.items():
-        ur_dat.append([listify(config), obj[0], obj[1]])
+# ur_dat = []
+# with open('report/uniform_random_evaluations.json', 'r+') as ur_in:
+#     dat = json.load(ur_in)
+#     for config, obj in dat.items():
+#         science, cost = map(float, obj.split(','))
+#         ur_dat.append([config, science, cost])
 
-with open('lhc_train_test.csv', 'w+') as outfile:
+
+with open('report/lhc_train_test.csv', 'w+') as outfile:
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(['config', 'science_benefit', 'cost'])
     for row in lhc_dat:
         writer.writerow(row)
 
-with open('ur_train_test.csv', 'w+') as outfile:
-    writer = csv.writer(outfile, delimiter=',')
-    writer.writerow(['config', 'science_benefit', 'cost'])
-    for row in ur_dat:
-        writer.writerow(row)
+# with open('report/ur_train_test.csv', 'w+') as outfile:
+#     writer = csv.writer(outfile, delimiter=',')
+#     writer.writerow(['config', 'science_benefit', 'cost'])
+#     for row in ur_dat:
+#         writer.writerow(row)

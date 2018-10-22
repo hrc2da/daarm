@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import sys
 from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -59,25 +60,25 @@ def norm_mse(y_true, y_pred):
     return K.mean(K.square(K.l2_normalize(y_pred) - K.l2_normalize(y_true)), axis=-1)
 
 
-configs, cost, science = read_data("data/ur_train_test.csv")
-configs = np.array(configs)
-cost = np.array(cost).reshape(-1, 1)
+def build_from_fp(fp, savelocation):
+    configs, cost, science = read_data(fp)
 
-# with open("cost_model_results.csv", "w+") as outfile:
-#     writer = csv.writer(outfile)
-#     preds = model.predict(configs)
-#     for i in range(len(configs)):
-#         row = [float(cost[i]), float(preds[i])]
-#         writer.writerow(row)
+    configs = np.array(configs)
+    cost = np.array(cost).reshape(-1, 1)
+
+    xTr_s, xTe_s, yTr_s, yTe_s = train_test_split(configs, cost)
+
+    cost_regressor = KerasRegressor(
+        build_fn=build_model, epochs=20, batch_size=32, verbose=1)
+    cost_regressor.fit(xTr_s, yTr_s)
+
+    print("Cost r^2 score:", r_sq_score(cost_regressor, xTe_s, yTe_s))
+    print("Cost mse score:", cost_regressor.score(xTe_s, yTe_s))
+
+    cost_regressor.model.save(savelocation)
 
 
-xTr_s, xTe_s, yTr_s, yTe_s = train_test_split(configs, cost)
-
-cost_regressor = KerasRegressor(
-    build_fn=build_model, epochs=20, batch_size=32, verbose=1)
-cost_regressor.fit(xTr_s, yTr_s)
-
-print("Cost r^2 score:", r_sq_score(cost_regressor, xTe_s, yTe_s))
-print("Cost mse score:", cost_regressor.score(xTe_s, yTe_s))
-
-cost_regressor.model.save("ur_cost_model.h5")
+if __name__ == '__main__':
+    fp = sys.argv[1]
+    savelocation = sys.argv[2]
+    build_from_fp(fp, savelocation)

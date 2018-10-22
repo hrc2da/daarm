@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import sys
 from keras.models import Sequential, load_model
 from keras.layers import Dense
 from keras.layers import Dropout
@@ -59,18 +60,25 @@ def norm_mse(y_true, y_pred):
     return K.mean(K.square(K.l2_normalize(y_pred) - K.l2_normalize(y_true)), axis=-1)
 
 
-configs, cost, science = read_data("data/ur_train_test.csv")
+def build_from_fp(fp, savelocation):
+    configs, cost, science = read_data(fp)
 
-configs = np.array(configs)
-science = np.array(science).reshape(-1, 1)
+    configs = np.array(configs)
+    science = np.array(science).reshape(-1, 1)
 
-xTr_s, xTe_s, yTr_s, yTe_s = train_test_split(configs, science)
+    xTr_s, xTe_s, yTr_s, yTe_s = train_test_split(configs, science)
 
-science_regressor = KerasRegressor(
-    build_fn=build_model, epochs=20, batch_size=32, verbose=1)
-science_regressor.fit(xTr_s, yTr_s)
+    science_regressor = KerasRegressor(
+        build_fn=build_model, epochs=20, batch_size=32, verbose=1)
+    science_regressor.fit(xTr_s, yTr_s)
 
-print("Science r^2 score:", r_sq_score(science_regressor, xTe_s, yTe_s))
-print("Science mse score:", science_regressor.score(xTe_s, yTe_s))
+    print("Science r^2 score:", r_sq_score(science_regressor, xTe_s, yTe_s))
+    print("Science mse score:", science_regressor.score(xTe_s, yTe_s))
 
-science_regressor.model.save("ur_science_nn_model.h5")
+    science_regressor.model.save(savelocation)
+
+
+if __name__ == '__main__':
+    fp = sys.argv[1]
+    savelocation = sys.argv[2]
+    build_from_fp(fp, savelocation)
