@@ -40,11 +40,11 @@ t2_cost_model = load_model('report/models/t2_cost_model.h5')
 t2_science_model = load_model('report/models/t2_science_model.h5')
 t3_cost_model = load_model('report/models/t3_cost_model.h5')
 t3_science_model = load_model('report/models/t3_science_model.h5')
-expert_cost_model = load_model('report/models/expert_cost_model.h5')
-expert_science_model = load_model('report/models/expert_science_model.h5')
+limit_cost_model = load_model('report/models/limit_cost.h5')
+limit_science_model = load_model('report/models/limit_science.h5')
 
 # acquire test data
-test_configs, test_cost, test_science = read_data('report/data/model_test_data.csv')
+test_configs, test_cost, test_science = read_data('report/data/model_validation_data.csv')
 test_configs = np.array(test_configs)
 
 # code to log residuals for science and cost
@@ -53,7 +53,7 @@ ur_residuals = []
 t1_residuals = []
 t2_residuals = []
 t3_residuals = []
-expert_residuals = []
+limit_residuals = []
 
 lhc_science_pred = lhc_science_model.predict(test_configs)
 lhc_cost_pred = lhc_cost_model.predict(test_configs)
@@ -65,8 +65,8 @@ t2_science_pred = t2_science_model.predict(test_configs)
 t2_cost_pred = t2_cost_model.predict(test_configs)
 t3_science_pred = t3_science_model.predict(test_configs)
 t3_cost_pred = t3_cost_model.predict(test_configs)
-expert_science_pred = expert_science_model.predict(test_configs)
-expert_cost_pred = expert_cost_model.predict(test_configs)
+limit_science_pred = limit_science_model.predict(test_configs)
+limit_cost_pred = limit_cost_model.predict(test_configs)
 
 for i in range(len(test_configs)):
     true_science = test_science[i]
@@ -81,47 +81,47 @@ for i in range(len(test_configs)):
     t2_cost_residual = t2_cost_pred[i][0] - true_cost
     t3_science_residual = t3_science_pred[i][0] - true_science
     t3_cost_residual = t3_cost_pred[i][0] - true_cost
-    expert_science_residual = expert_science_pred[i][0] - true_science
-    expert_cost_residual = expert_cost_pred[i][0] - true_cost
+    limit_science_residual = limit_science_pred[i][0] - true_science
+    limit_cost_residual = limit_cost_pred[i][0] - true_cost
     lhc_residuals.append([lhc_science_residual, lhc_cost_residual])
     ur_residuals.append([ur_science_residual, ur_cost_residual])
     t1_residuals.append([t1_science_residual, t1_cost_residual])
     t2_residuals.append([t2_science_residual, t2_cost_residual])
     t3_residuals.append([t3_science_residual, t3_cost_residual])
-    expert_residuals.append([expert_science_residual, expert_cost_residual])
+    limit_residuals.append([limit_science_residual, limit_cost_residual])
 
-with open('report/data/residuals/lhc_model_eval.csv', 'w+') as outfile:
+with open('report/data/residuals/set_2/lhc_model_eval.csv', 'w+') as outfile:
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(['science_res', 'cost_res'])
     for row in lhc_residuals:
         writer.writerow(row)
 
-with open('report/data/residuals/ur_model_eval.csv', 'w+') as outfile:
+with open('report/data/residuals/set_2/ur_model_eval.csv', 'w+') as outfile:
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(['science_res', 'cost_res'])
     for row in ur_residuals:
         writer.writerow(row)
 
-with open('report/data/residuals/t1_model_eval.csv', 'w+') as outfile:
+with open('report/data/residuals/set_2/t1_model_eval.csv', 'w+') as outfile:
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(['science_res', 'cost_res'])
     for row in t1_residuals:
         writer.writerow(row)
 
-with open('report/data/residuals/t2_model_eval.csv', 'w+') as outfile:
+with open('report/data/residuals/set_2/t2_model_eval.csv', 'w+') as outfile:
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(['science_res', 'cost_res'])
     for row in t2_residuals:
         writer.writerow(row)
 
-with open('report/data/residuals/t3_model_eval.csv', 'w+') as outfile:
+with open('report/data/residuals/set_2/t3_model_eval.csv', 'w+') as outfile:
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(['science_res', 'cost_res'])
     for row in t3_residuals:
         writer.writerow(row)
 
-with open('report/data/residuals/expert_model_eval.csv', 'w+') as outfile:
+with open('report/data/residuals/set_2/limit_model_eval.csv', 'w+') as outfile:
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(['science_res', 'cost_res'])
-    for row in expert_residuals:
+    for row in limit_residuals:
         writer.writerow(row)
