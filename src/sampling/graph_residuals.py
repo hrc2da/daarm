@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 import seaborn as sns
+import pandas as pd
 
 lhc_science_residuals = []
 lhc_cost_residuals = []
@@ -60,14 +61,33 @@ with open('report/data/residuals/set_2/limit_model_eval.csv', 'r+') as limit_in:
 
 
 sns.set(style="whitegrid")
-ax = sns.boxplot(x="Sampling Method", y="Residual Science Benefit Error", data={'Sampling Method': [
-                 'Latin Hypercube', 'Uniform Random', 'User Guided t1', 'Agent Guided t2', 'Collaboratively Explored t3', 'Limit'], 'Residual Science Benefit Error': [lhc_science_residuals, ur_science_residuals, t1_science_residuals, t2_science_residuals, t3_science_residuals, limit_science_residuals]}, palette="Set2")
+# ax = sns.boxplot(x="Sampling Method", y="Residual Science Benefit Error", data={'Sampling Method': [
+#                  'Latin Hypercube', 'Uniform Random', 'User Guided t1', 'Agent Guided t2', 'Collaboratively Explored t3', 'Limit'], 'Residual Science Benefit Error': [lhc_science_residuals, ur_science_residuals, t1_science_residuals, t2_science_residuals, t3_science_residuals, limit_science_residuals]}, palette="Set2", orient='v')
+# ax.set(xlabel='Sampling Method', ylabel='Residual Science Benefit Error')
+science_df = pd.DataFrame({"Latin Hypercube": lhc_science_residuals,
+                            "Uniform Random": ur_science_residuals,
+                            "User Guided (T1)": t1_science_residuals,
+                            "Agent Guided (T2)": t2_science_residuals,
+                            "Collaboratively Guided (T3)": t3_science_residuals,
+                            "Reference": limit_science_residuals})
+ax = sns.boxplot(data=science_df, order = ['Latin Hypercube', 'Uniform Random', 'User Guided (T1)', 'Agent Guided (T2)', 'Collaboratively Guided (T3)', 'Reference'])                            
+ax = sns.swarmplot(data=science_df, color='0.25', order = ['Latin Hypercube', 'Uniform Random', 'User Guided (T1)', 'Agent Guided (T2)', 'Collaboratively Guided (T3)', 'Reference'])
 ax.set(xlabel='Sampling Method', ylabel='Residual Science Benefit Error')
 plt.ylim(-0.3, .3)
 plt.show()
 
-ax = sns.boxplot(x="Sampling Method", y="Residual Cost Error", data={'Sampling Method': [
-                 'Latin Hypercube', 'Uniform Random', 'User Guided t1', 'Agent Guided t2', 'Collaboratively Explored t3', 'Limit'], 'Residual Cost Error': [lhc_cost_residuals, ur_cost_residuals, t1_cost_residuals, t2_cost_residuals, t3_cost_residuals, limit_cost_residuals]}, palette="Set2")
-ax.set(xlabel='Sampling Method', ylabel='Residual Cost Error')
-plt.ylim(-4000, 4000)
+# ax = sns.boxplot(x="Sampling Method", y="Residual Cost Error", data={'Sampling Method': [
+#                  'Latin Hypercube', 'Uniform Random', 'User Guided t1', 'Agent Guided t2', 'Collaboratively Explored t3', 'Limit'], 'Residual Cost Error': [lhc_cost_residuals, ur_cost_residuals, t1_cost_residuals, t2_cost_residuals, t3_cost_residuals, limit_cost_residuals]}, palette="Set2", orient = 'v')
+# ax.set(xlabel='Sampling Method', ylabel='Residual Cost Error')
+# plt.ylim(-4000, 4000)
+# plt.show()
+cost_df = pd.DataFrame({"Latin Hypercube": lhc_cost_residuals,
+                            "Uniform Random": ur_cost_residuals,
+                            "User Guided (T1)": t1_cost_residuals,
+                            "Agent Guided (T2)": t2_cost_residuals,
+                            "Collaboratively Guided (T3)": t3_cost_residuals,
+                            "Reference": limit_cost_residuals})
+ax = sns.violinplot(data=cost_df, order = ['Latin Hypercube', 'Uniform Random', 'User Guided (T1)', 'Agent Guided (T2)', 'Collaboratively Guided (T3)', 'Reference'])
+ax.set(xlabel='Sampling Method', ylabel='Residual Cost Benefit Error')
+plt.ylim(-6000, 6000)
 plt.show()
