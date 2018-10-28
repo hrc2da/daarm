@@ -97,14 +97,17 @@ sns.set(style="whitegrid")
 # ax = sns.boxplot(x="Sampling Method", y="Residual Science Benefit Error", data={'Sampling Method': [
 #                  'Latin Hypercube', 'Uniform Random', 'User Guided t1', 'Agent Guided t2', 'Collaboratively Explored t3', 'Limit'], 'Residual Science Benefit Error': [lhc_science_residuals, ur_science_residuals, t1_science_residuals, t2_science_residuals, t3_science_residuals, limit_science_residuals]}, palette="Set2", orient='v')
 # ax.set(xlabel='Sampling Method', ylabel='Residual Science Benefit Error')
-science_df = pd.DataFrame({"Latin Hypercube": lhc_science_residuals,
+science_df1 = pd.DataFrame({"Latin Hypercube": lhc_science_residuals,
                             "Uniform Random": ur_science_residuals,
+                            "Reference": limit_science_residuals})
+science_df2 = pd.DataFrame({
                             "User Guided (T1)": t1_science_residuals,
                             "Agent Guided (T2)": t2_science_residuals,
-                            "Collaboratively Guided (T3)": t3_science_residuals,
-                            "Reference": limit_science_residuals})
+                            "Collaboratively Guided (T3)": t3_science_residuals
+})
+science_df = pd.concat([science_df1,science_df2], ignore_index=False, axis=1)
 ax = sns.boxplot(data=science_df, order = ['Latin Hypercube', 'Uniform Random', 'User Guided (T1)', 'Agent Guided (T2)', 'Collaboratively Guided (T3)', 'Reference'])                            
-ax = sns.swarmplot(data=science_df, color='0.25', order = ['Latin Hypercube', 'Uniform Random', 'User Guided (T1)', 'Agent Guided (T2)', 'Collaboratively Guided (T3)', 'Reference'])
+#ax = sns.swarmplot(data=science_df, color='0.25', order = ['Latin Hypercube', 'Uniform Random', 'User Guided (T1)', 'Agent Guided (T2)', 'Collaboratively Guided (T3)', 'Reference'])
 ax.set(xlabel='Sampling Method', ylabel='Residual Science Benefit Error')
 plt.ylim(-0.3, .3)
 plt.show()
